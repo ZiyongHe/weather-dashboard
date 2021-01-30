@@ -33,6 +33,7 @@ function getWeatherData(city) {
       return fetch(query2)
         .then((res) => res.json())
         .then((res) => {
+          data.forecast.length = 0
           console.log(res)
           data.current.uvIndex = res.daily[0].uvi
           data.current.icon = res.daily[0].weather[0].icon
@@ -92,8 +93,6 @@ function setUVIColor(uvIndex) {
 }
 
 function displayWeather(record) {
-  console.log(record)
-
   const currentWeather = document.getElementById('current-weather')
   currentWeather.innerHTML = `<div class="card-body">
         <h2 class="d-inline-block mr-3">${record.city} ${
@@ -126,12 +125,35 @@ function displayWeather(record) {
             </div>
           </div>`
   })
-  return record
+}
+
+function displayNewHistory(cityName) {
+  const searchHistoryList = document.getElementById('search-history')
+
+  searchHistoryList.innerHTML += `<li class="list-group-item p-0">
+      <button class="search-entry w-100 h-100 btn btn-link" data-city-name="${cityName}">${cityName}</button>
+    </li>`
+}
+
+function historyBtn(event) {
+  const historyCity = event.target.getAttribute('data-city-name')
+  history.forEach((record) => {
+    if (record.city === historyCity) displayWeather(record)
+  })
 }
 
 // local storage
-function saveSearchHistory(city) {
-  localStorage.setItem('searchHistory', city)
+function saveSearchHistory(history) {
+  localStorage.setItem('searchHistory', JSON.stringify(history))
+}
+
+function initializing() {
+  const receive = localStorage.getItem('searchHistory')
+  history = JSON.parse(receive)
+  history.forEach((record) => {
+    displayNewHistory(record.city)
+  })
+  if (history) displayWeather(history[history.length - 1])
 }
 
 function submitSearch(event) {
@@ -140,14 +162,19 @@ function submitSearch(event) {
     .getElementById('city-name')
     .value.trim()
     .replace(/\s+/g, ' ')
-  getWeatherData(city)
-    .then((data) => {
-      const record = { city: data.city, weather: data }
-      history.push(record)
-      return record
-    })
-    .then((record) => displayWeather(record))
-    .then((record) => saveSearchHistory(record.city))
+  getWeatherData(city).then((data) => {
+    const record = { city: data.city, weather: data }
+    history.push(record)
+    displayWeather(record)
+    displayNewHistory(record.city)
+    saveSearchHistory(history)
+    console.log(history)
+  })
 }
 
+initializing()
+
 document.getElementById('search-city').addEventListener('submit', submitSearch)
+document
+  .querySelectorAll('.search-entry')
+  .forEach((entry) => entry.addEventListener('click', historyBtn))
