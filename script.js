@@ -126,6 +126,12 @@ function displayWeather(record) {
             </div>
           </div>`
   })
+  return record
+}
+
+// local storage
+function saveSearchHistory(city) {
+  localStorage.setItem('searchHistory', city)
 }
 
 function submitSearch(event) {
@@ -141,6 +147,7 @@ function submitSearch(event) {
       return record
     })
     .then((record) => displayWeather(record))
+    .then((record) => saveSearchHistory(record.city))
 }
 
 document.getElementById('search-city').addEventListener('submit', submitSearch)
