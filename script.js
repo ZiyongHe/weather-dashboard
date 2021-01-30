@@ -5,6 +5,7 @@ let data = {
   forecast: [],
 }
 let history = []
+let err
 
 function convertDate(openWeatherDate) {
   const convertedDate = new Date(openWeatherDate * 1000)
@@ -19,8 +20,12 @@ function getWeatherData(city) {
   // for current weather data
   const query1 = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`
   return fetch(query1)
-    .then((res) => res.json())
     .then((res) => {
+      if (res.status == 404) return null
+      res.json()
+    })
+    .then((res) => {
+      if (!res) return null
       lat = res.coord.lat
       lon = res.coord.lon
       data.current.temp = res.main.temp
@@ -156,6 +161,16 @@ function initializing() {
   if (history) displayWeather(history[history.length - 1])
 }
 
+function isBadInput(data) {
+  if (!data) {
+    document.getElementById(
+      'error'
+    ).innerHTML = `Error: please enter a city name.`
+    return true
+  }
+  return false
+}
+
 function submitSearch(event) {
   event.preventDefault()
   const city = document
@@ -163,6 +178,7 @@ function submitSearch(event) {
     .value.trim()
     .replace(/\s+/g, ' ')
   getWeatherData(city).then((data) => {
+    if (isBadInput(data)) return
     const record = { city: data.city, weather: data }
     history.push(record)
     displayWeather(record)
