@@ -6,6 +6,7 @@ let data = {
 }
 let history = []
 let err
+let cityName
 
 function convertDate(openWeatherDate) {
   const convertedDate = new Date(openWeatherDate * 1000)
@@ -22,7 +23,7 @@ function getWeatherData(city) {
   return fetch(query1)
     .then((res) => {
       if (res.status == 404) return null
-      res.json()
+      return res.json()
     })
     .then((res) => {
       if (!res) return null
@@ -31,7 +32,7 @@ function getWeatherData(city) {
       data.current.temp = res.main.temp
       data.current.humidity = res.main.humidity
       data.current.wind = res.wind.speed
-      data.city = res.name
+      cityName = res.name
 
       // one call API with lat and lon for forecast
       const query2 = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`
@@ -39,7 +40,6 @@ function getWeatherData(city) {
         .then((res) => res.json())
         .then((res) => {
           data.forecast.length = 0
-          console.log(res)
           data.current.uvIndex = res.daily[0].uvi
           data.current.icon = res.daily[0].weather[0].icon
           data.current.date = convertDate(res.current.dt)
@@ -101,24 +101,24 @@ function displayWeather(record) {
   const currentWeather = document.getElementById('current-weather')
   currentWeather.innerHTML = `<div class="card-body">
         <h2 class="d-inline-block mr-3">${record.city} ${
-    record.weather.current.date
+    record.current.date
   }</h2>
         <img class="d-inline-block" src="https://openweathermap.org/img/wn/${
-          record.weather.current.icon
+          record.current.icon
         }@2x.png" alt="">
-        <p>Temperature: ${record.weather.current.temp} &#176;C</p>
-        <p>Humidity: ${record.weather.current.humidity}&#37;</p>
-        <p>Wind Speed: ${record.weather.current.wind} km/h</p>
+        <p>Temperature: ${record.current.temp} &#176;C</p>
+        <p>Humidity: ${record.current.humidity}&#37;</p>
+        <p>Wind Speed: ${record.current.wind} km/h</p>
         <p>UV Index: <span id="current-uv-index" class="${setUVIColor(
-          record.weather.current.uvIndex
-        )} py-1 px-2 rounded">${record.weather.current.uvIndex}</span></p>
+          record.current.uvIndex
+        )} py-1 px-2 rounded">${record.current.uvIndex}</span></p>
       </div>`
 
   const fiveDayForecastCards = document.getElementById(
     'five-day-forecast-cards'
   )
   fiveDayForecastCards.innerHTML = ''
-  record.weather.forecast.forEach((day) => {
+  record.forecast.forEach((day) => {
     fiveDayForecastCards.innerHTML += `<div class="col-lg">
             <div class="card bg-primary text-white">
               <div class="card-body d-flex flex-column justify-content-center align-items-center">
@@ -154,11 +154,13 @@ function saveSearchHistory(history) {
 
 function initializing() {
   const receive = localStorage.getItem('searchHistory')
-  history = JSON.parse(receive)
-  history.forEach((record) => {
-    displayNewHistory(record.city)
-  })
-  if (history) displayWeather(history[history.length - 1])
+  if (receive) {
+    history = JSON.parse(receive)
+    history.forEach((record) => {
+      displayNewHistory(record.city)
+    })
+    displayWeather(history[history.length - 1])
+  }
 }
 
 function isBadInput(data) {
@@ -179,12 +181,14 @@ function submitSearch(event) {
     .replace(/\s+/g, ' ')
   getWeatherData(city).then((data) => {
     if (isBadInput(data)) return
-    const record = { city: data.city, weather: data }
+    const record = { ...data, city: cityName }
     history.push(record)
     displayWeather(record)
     displayNewHistory(record.city)
     saveSearchHistory(history)
-    console.log(history)
+    document
+      .querySelectorAll('.search-entry')
+      .forEach((entry) => entry.addEventListener('click', historyBtn))
   })
 }
 
