@@ -124,7 +124,7 @@ function displayWeather(record) {
               <div class="card-body d-flex flex-column justify-content-center align-items-center">
                 <p class="h5">${day.date}</p>
                 <img class="mb-3" src="https://openweathermap.org/img/wn/${day.icon}@2x.png" alt="">
-                <p>Temp: ${day.temp} &#176;F</p>
+                <p>Temp: ${day.temp} &#176;C</p>
                 <p>Humidity: ${day.humidity}&#37;</p>
               </div>
             </div>
